@@ -105,6 +105,8 @@ func (alert *Alert) GetDescriptionUseResponseBody(resultBody []byte) string {
 		parsedString, _, err := jsonpath.Eval(strings.TrimPrefix(strings.TrimPrefix(pattern, BodyPlaceholder), "."), resultBody)
 		if err == nil {
 			return TruncateString(string(parsedString), 4096) // Limit to 4096 characters
+		} else {
+			return "" // Return empty string if parsing fails
 		}
 	}
 	return pattern
