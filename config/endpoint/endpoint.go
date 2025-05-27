@@ -459,6 +459,11 @@ func (e *Endpoint) needsToReadBody() bool {
 			return true
 		}
 	}
+	for _, alert := range e.Alerts {
+		if alert.HasBodyPlaceholder() {
+			return true
+		}
+	}
 	return false
 }
 

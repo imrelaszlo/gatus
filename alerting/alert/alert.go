@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/TwiN/gatus/v5/jsonpath"
 	"github.com/TwiN/logr"
 	"gopkg.in/yaml.v3"
 )
@@ -14,6 +15,12 @@ import (
 var (
 	// ErrAlertWithInvalidDescription is the error with which Gatus will panic if an alert has an invalid character
 	ErrAlertWithInvalidDescription = errors.New("alert description must not have \" or \\")
+)
+
+// Placeholders
+const (
+	// BodyPlaceholder is a placeholder for the Body of the response
+	BodyPlaceholder = "[BODY]"
 )
 
 // Alert is endpoint.Endpoint's alert configuration
@@ -88,6 +95,21 @@ func (alert *Alert) GetDescription() string {
 	return *alert.Description
 }
 
+// GetDescriptionUseResponseBody retrieves the description of the alert, using the response body if necessary
+func (alert *Alert) GetDescriptionUseResponseBody(resultBody []byte) string {
+	pattern := alert.GetDescription()
+	if pattern == BodyPlaceholder {
+		return TruncateString(string(resultBody), 1024) // Limit to 1024 characters
+	}
+	if strings.Contains(pattern, BodyPlaceholder) {
+		parsedString, _, err := jsonpath.Eval(strings.TrimPrefix(strings.TrimPrefix(pattern, BodyPlaceholder), "."), resultBody)
+		if err == nil {
+			return TruncateString(string(parsedString), 4096) // Limit to 4096 characters
+		}
+	}
+	return pattern
+}
+
 // IsEnabled returns whether an alert is enabled or not
 // Returns true if not set
 func (alert *Alert) IsEnabled() bool {
@@ -125,4 +147,24 @@ func (alert *Alert) ProviderOverrideAsBytes() []byte {
 		logr.Warnf("[alert.ProviderOverrideAsBytes] Failed to marshal alert override of type=%s as bytes: %v", alert.Type, err)
 	}
 	return yamlBytes
+}
+
+func (alert *Alert) HasBodyPlaceholder() bool {
+	return strings.Contains(string(*alert.Description), BodyPlaceholder)
+}
+
+func TruncateString(str string, length int) string {
+	if length <= 0 {
+		return ""
+	}
+	trunc := ""
+	count := 0
+	for _, char := range str {
+		trunc += string(char)
+		count++
+		if count >= length {
+			break
+		}
+	}
+	return trunc
 }
