@@ -113,13 +113,21 @@ func (provider *AlertProvider) buildRequestBody(cfg *Config, ep *endpoint.Endpoi
 	var message string
 	if resolved {
 		if len(cfg.TextTwilioResolved) > 0 {
-			message = strings.Replace(strings.Replace(cfg.TextTwilioResolved, "{endpoint}", ep.DisplayName(), 1), "{description}", alert.GetDescriptionUseResponseBody(result.Body), 1)
+			message = cfg.TextTwilioResolved
+			message = strings.ReplaceAll(message, "[ENDPOINT_NAME]", ep.Name)
+			message = strings.ReplaceAll(message, "[ENDPOINT_GROUP]", ep.Group)
+			message = strings.ReplaceAll(message, "[ENDPOINT_URL]", ep.URL)
+			message = strings.ReplaceAll(message, "[ALERT_DESCRIPTION]", alert.GetDescriptionUseResponseBody(result.Body))
 		} else {
 			message = fmt.Sprintf("RESOLVED: %s - %s", ep.DisplayName(), alert.GetDescriptionUseResponseBody(result.Body))
 		}
 	} else {
 		if len(cfg.TextTwilioTriggered) > 0 {
-			message = strings.Replace(strings.Replace(cfg.TextTwilioTriggered, "{endpoint}", ep.DisplayName(), 1), "{description}", alert.GetDescriptionUseResponseBody(result.Body), 1)
+			message = cfg.TextTwilioTriggered
+			message = strings.ReplaceAll(message, "[ENDPOINT_NAME]", ep.Name)
+			message = strings.ReplaceAll(message, "[ENDPOINT_GROUP]", ep.Group)
+			message = strings.ReplaceAll(message, "[ENDPOINT_URL]", ep.URL)
+			message = strings.ReplaceAll(message, "[ALERT_DESCRIPTION]", alert.GetDescriptionUseResponseBody(result.Body))
 		} else {
 			message = fmt.Sprintf("TRIGGERED: %s - %s", ep.DisplayName(), alert.GetDescriptionUseResponseBody(result.Body))
 		}
